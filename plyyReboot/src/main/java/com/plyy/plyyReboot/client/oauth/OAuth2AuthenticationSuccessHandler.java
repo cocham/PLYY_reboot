@@ -30,7 +30,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final UserRepository userRepository;
     private final RedisService redisService;
 
-    // (프론트엔드가 토큰을 받을 콜백 URL)
     private static final String FRONTEND_CALLBACK_URL = "http://localhost:3000/auth/callback";
     private static final String FRONTEND_ONBOARDING_URL = "http://localhost:3000/onboarding";
 
@@ -44,17 +43,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         // 2. registrationId 가져오기
         String registrationId = ((OAuth2AuthenticationToken) authentication).getAuthorizedClientRegistrationId();
 
-        // 3. attributes 맵에서 직접 email 추출
-        String email = "";
-        if (registrationId.equalsIgnoreCase("naver")) {
-            Map<String, Object> responseMap = (Map<String, Object>) attributes.get("response");
-            email = (String) responseMap.get("email");
-        } else if (registrationId.equalsIgnoreCase("kakao")) {
-            Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
-            email = (String) kakaoAccount.get("email");
-        } else if (registrationId.equalsIgnoreCase("google")) {
-            email = (String) attributes.get("email");
-        }
+        // 3. UserService가 Principal의 "name"으로 이메일을 넣어줌
+        String email = authentication.getName();
 
         // 4. 이메일로 유저 조회
         User user = userRepository.findByEmail(email)

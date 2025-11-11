@@ -41,6 +41,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         // 3. DTO를 사용해 공급자별로 유저 정보를 파싱
         OAuth2UserInfo userInfo = createUserInfo(registrationId, attributes);
 
+        // 3.1 파싱한 이메일을 attributes 맵에 추가
+        // (SuccessHandler가 이메일을 바로 찾을 수 있도록)
+        String email = userInfo.getEmail();
+        attributes.put("plyy_provider_email", email);
+
         // 4. 이메일로 DB에서 유저 찾기 (계정 통합)
         Optional<User> userOptional = userRepository.findByEmail(userInfo.getEmail());
 
@@ -61,11 +66,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 new SimpleGrantedAuthority(user.getRole())
         );
 
-        // (주의: DefaultOAuth2User를 반환해야 SuccessHandler가 Map을 읽을 수 있음)
+        // 5.1 리팩토링 2단계: "name"으로 사용할 키를 "plyy_provider_email"로 지정함
         return new DefaultOAuth2User(
-                authorities, // ★ null 대신 authorities 변수를 전달
+                authorities, // null 대신 authorities 변수를 전달
                 attributes,
-                userRequest.getClientRegistration().getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName()
+                "plyy_provider_email" // Pricipal의 "name"이 이 키의 값(이메일)이 됨
         );
     }
 
