@@ -1,5 +1,6 @@
 package com.plyy.plyyReboot.config.security;
 
+import org.springframework.beans.factory.annotation.Value;
 import com.plyy.plyyReboot.client.oauth.CustomOAuth2UserService;
 import com.plyy.plyyReboot.client.oauth.OAuth2AuthenticationSuccessHandler;
 import com.plyy.plyyReboot.config.security.jwt.JwtAuthenticationFilter;
@@ -20,6 +21,9 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
+
+import static com.plyy.plyyReboot.config.security.ApiPaths.API_V1;
 
 @Configuration
 @EnableWebSecurity
@@ -30,6 +34,8 @@ public class SecurityConfig {
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @Value("${app.cors.allowed-origins}")
+    private List<String> allowedOrigins;
     /**
      * 필터 체인 1: API (JWT)
      * /api/** 경로의 모든 요청을 담당
@@ -48,17 +54,17 @@ public class SecurityConfig {
                 // (2) API 엔드포인트별 권한 설정 (새 온보딩 규칙 추가)
                 .authorizeHttpRequests(auth -> auth
                         // (permitAll() 경로 - 토큰 재발급)
-                        .requestMatchers("/api/v1/auth/refresh").permitAll()
+                        .requestMatchers(ApiPaths.AUTH_REFRESH).permitAll()
 
                         // (온보딩 규칙 -  닉네임 중복 확인)
-                        .requestMatchers("/api/v1/users/nickname/check").hasAnyRole("NEW_USER", "USER", "CURATOR")
+                        .requestMatchers(ApiPaths.USERS_NICKNAME_CHECK).hasAnyRole("NEW_USER", "USER", "CURATOR")
 
                         // (온보딩 규칙 - 온보딩 완료)
-                        .requestMatchers("/api/v1/users/onboarding/complete").hasRole("NEW_USER")
+                        .requestMatchers(ApiPaths.USERS_ONBOARDING_COMPLETE).hasRole("NEW_USER")
 
                         // (기존 규칙 - 큐레이터/일반 유저)
-                        .requestMatchers("/api/v1/curator/**").hasRole("CURATOR")
-                        .requestMatchers("/api/v1/**").hasAnyRole("USER", "CURATOR") // (로그아웃 등 나머지 /api/v1/**)
+                        .requestMatchers(ApiPaths.CURATOR_BASE + "/**").hasRole("CURATOR")
+                        .requestMatchers(API_V1 + "/**").hasAnyRole("USER", "CURATOR") // (로그아웃 등 나머지 /api/v1/**)
                         .anyRequest().authenticated()
                 )
 
@@ -113,7 +119,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://127.0.0.1:3000"));
+        config.setAllowedOrigins(allowedOrigins);;
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setExposedHeaders(Arrays.asList("*"));
