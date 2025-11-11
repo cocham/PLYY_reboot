@@ -22,7 +22,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String nickname;
 
     @Column(nullable = false)
@@ -94,29 +94,31 @@ public class User {
     public User(String email, String nickname, String role, String provider, String socialId, String thumbnailUrl) {
         this.email = email;
         this.nickname = nickname;
-        this.role = role; // (CustomOAuth2UserService에서 "ROLE_USER"로 넘겨줌)
+        this.role = role;
         this.provider = provider;
         this.socialId = socialId;
         this.thumbnailUrl = thumbnailUrl;
         this.lastLoginAt = LocalDateTime.now();
-        this.createdAt = LocalDateTime.now(); // CreationTimestamp가 동작하지만 명시적으로 설정
+        this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
 
-    // (편의 메소드) 로그인(방문) 시 마지막 로그인 일시 업데이트
     public void updateLastLogin() {
         this.lastLoginAt = LocalDateTime.now();
     }
 
-    // (편의 메소드) 큐레이터 승급 로직
     public void upgradeToCurator() {
         this.role = "ROLE_CURATOR";
     }
 
-    // (편의 메소드) 프로필 정보 업데이트 (예시)
     public void updateProfile(String nickname, String introduction, String thumbnailUrl) {
         if (nickname != null) this.nickname = nickname;
         if (introduction != null) this.introduction = introduction;
         if (thumbnailUrl != null) this.thumbnailUrl = thumbnailUrl;
+    }
+
+    public void onboard(String nickname, String role) {
+        this.nickname = nickname;
+        this.role = role;
     }
 }
