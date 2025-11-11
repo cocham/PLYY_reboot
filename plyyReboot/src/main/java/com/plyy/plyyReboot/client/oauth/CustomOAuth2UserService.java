@@ -1,5 +1,7 @@
 package com.plyy.plyyReboot.client.oauth;
 
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import com.plyy.plyyReboot.domain.user.User;
 import com.plyy.plyyReboot.domain.user.UserRepository;
 import com.plyy.plyyReboot.client.oauth.dto.GoogleOAuth2UserInfo;
@@ -14,6 +16,8 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,17 +31,17 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
 
-        // 1. 유저 정보(Map)를 가져옵니다.
+        // 1. 유저 정보(Map)를 가져옴
         OAuth2User oAuth2User = super.loadUser(userRequest);
         Map<String, Object> attributes = oAuth2User.getAttributes();
 
-        // 2. registrationId (kakao, naver, google)를 확인합니다.
+        // 2. registrationId (kakao, naver, google)를 확인
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
 
-        // 3. DTO를 사용해 공급자별로 유저 정보를 파싱합니다.
+        // 3. DTO를 사용해 공급자별로 유저 정보를 파싱
         OAuth2UserInfo userInfo = createUserInfo(registrationId, attributes);
 
-        // 4. 이메일로 DB에서 유저를 찾습니다. (계정 통합)
+        // 4. 이메일로 DB에서 유저 찾기 (계정 통합)
         Optional<User> userOptional = userRepository.findByEmail(userInfo.getEmail());
 
         User user;
@@ -50,10 +54,16 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             user = registerNewUser(userInfo, registrationId);
         }
 
-        // 5. Spring Security의 Principal 객체를 반환합니다.
-        // (주의: DefaultOAuth2User를 반환해야 SuccessHandler가 Map을 읽을 수 있습니다)
+        /// 5. Spring Security의 Principal 객체를 반환 (수정)
+        // DB에서 가져온 user의 실제 Role("ROLE_NEW_USER" 등)을
+        // Spring Security가 인식할 수 있는 권한 목록(GrantedAuthority)으로 변환
+        List<GrantedAuthority> authorities = Collections.singletonList(
+                new SimpleGrantedAuthority(user.getRole())
+        );
+
+        // (주의: DefaultOAuth2User를 반환해야 SuccessHandler가 Map을 읽을 수 있음)
         return new DefaultOAuth2User(
-                null, // (권한은 SecurityConfig에서 처리)
+                authorities, // ★ null 대신 authorities 변수를 전달
                 attributes,
                 userRequest.getClientRegistration().getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName()
         );
@@ -71,15 +81,13 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         throw new OAuth2AuthenticationException("Unsupported provider: " + registrationId);
     }
 
-    // (Helper) 신규 유저를 DB에 저장하는 메소드
     private User registerNewUser(OAuth2UserInfo userInfo, String registrationId) {
         User user = User.builder()
                 .email(userInfo.getEmail())
-                .nickname(userInfo.getNickname()) // (닉네임 중복 체크 로직 추가 필요)
-                .thumbnailUrl(userInfo.getProfileImageUrl())
+                .nickname(null)
                 .provider(registrationId)
                 .socialId(userInfo.getProviderId())
-                .role("ROLE_USER") // (기본 역할)
+                .role("ROLE_NEW_USER")
                 .build();
 
         return userRepository.save(user);

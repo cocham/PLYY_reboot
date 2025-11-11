@@ -50,7 +50,7 @@ public class SecurityConfig {
                         // (permitAll() 경로 - 토큰 재발급)
                         .requestMatchers("/api/v1/auth/refresh").permitAll()
 
-                        // (온보딩 규칙 - 닉네임 중복 확인)
+                        // (온보딩 규칙 -  닉네임 중복 확인)
                         .requestMatchers("/api/v1/users/nickname/check").hasAnyRole("NEW_USER", "USER", "CURATOR")
 
                         // (온보딩 규칙 - 온보딩 완료)

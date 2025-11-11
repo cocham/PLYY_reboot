@@ -5,6 +5,4 @@ public interface OAuth2UserInfo {
     String getProvider(); // "kakao", "naver", "google"
     String getProviderId(); // 소셜의 고유 ID
     String getEmail();
-    String getNickname();
-    String getProfileImageUrl();
 }
