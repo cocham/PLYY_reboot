@@ -1,12 +1,12 @@
 package com.plyy.plyyReboot.client.oauth;
 
+import com.plyy.plyyReboot.client.oauth.util.CookieUtil;
 import com.plyy.plyyReboot.config.security.jwt.JwtTokenProvider;
 import com.plyy.plyyReboot.web.api.dto.TokenResponse;
 import com.plyy.plyyReboot.domain.user.User;
 import com.plyy.plyyReboot.domain.user.UserRepository;
 import com.plyy.plyyReboot.config.security.RedisService;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -66,8 +66,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             log.error("Refresh Token 저장 실패 (UserID: {})", user.getId(), e);
         }
 
-        addCookie(request, response, "refreshToken", tokens.refreshToken(), 604800, true);
-        addCookie(request, response, "accessToken", tokens.accessToken(), 86400, false);
+        CookieUtil.addCookie(request, response, "refreshToken", tokens.refreshToken(), 604800, true);
+        CookieUtil.addCookie(request, response, "accessToken", tokens.accessToken(), 86400, false);
         String targetUrl;
         if (isNewUser) {
             targetUrl = UriComponentsBuilder.fromUriString(FRONTEND_ONBOARDING_URL)
@@ -79,14 +79,5 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         }
 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
-    }
-
-    private void addCookie(HttpServletRequest request, HttpServletResponse response, String name, String value, int maxAge, boolean httpOnly) {
-        Cookie cookie = new Cookie(name, value);
-        cookie.setPath("/"); // 모든 경로에서 접근 가능
-        cookie.setMaxAge(maxAge); // 초 단위로 설정
-        cookie.setHttpOnly(httpOnly); // JS 접근 차단 (refresh token에 필수)
-        cookie.setSecure(request.isSecure()); // HTTPS(운영)에서만 Secure 플래그 설정, 로컬(http)에서도 테스트 가능하게 변경
-        response.addCookie(cookie);
     }
 }
