@@ -6,26 +6,25 @@ import com.plyy.plyyReboot.web.api.dto.TokenResponse;
 import com.plyy.plyyReboot.domain.user.User;
 import com.plyy.plyyReboot.domain.user.UserRepository;
 import com.plyy.plyyReboot.config.security.RedisService;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
-import java.util.Map;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
-
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private final RedisService redisService;
@@ -33,51 +32,80 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private static final String FRONTEND_CALLBACK_URL = "http://localhost:3000/auth/callback";
     private static final String FRONTEND_ONBOARDING_URL = "http://localhost:3000/onboarding";
 
+    private static final int REFRESH_TOKEN_COOKIE_MAX_AGE = 604800; // 7일
+    private static final int ACCESS_TOKEN_COOKIE_MAX_AGE = 86400;   // 1일
+
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+    public void onAuthenticationSuccess(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            Authentication authentication
+    ) throws IOException, ServletException {
+        User user = getUserFromAuthentication(authentication);
+        TokenResponse tokens = issueTokensAndSaveToRedis(user);
+        addTokensToCookie(request, response, tokens);
+        String targetUrl = determineTargetUrl(user);
+        getRedirectStrategy().sendRedirect(request, response, targetUrl);
+    }
 
-        // 1. OAuth2User에서 attributes 맵
-        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-        Map<String, Object> attributes = oAuth2User.getAttributes();
-
-        // 2. registrationId 가져오기
-        String registrationId = ((OAuth2AuthenticationToken) authentication).getAuthorizedClientRegistrationId();
-
-        // 3. UserService가 Principal의 "name"으로 이메일을 넣어줌
+    private User getUserFromAuthentication(Authentication authentication) {
         String email = authentication.getName();
 
-        // 4. 이메일로 유저 조회
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("OAuth2 인증 성공 후 유저를 찾을 수 없습니다."));
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "인증 성공했으나 DB에 유저가 없음. Email: " + email
+                ));
+    }
 
-        boolean isNewUser = user.getRole().equals("ROLE_NEW_USER");
-
-        // 5. JWT 토큰 생성
+    private TokenResponse issueTokensAndSaveToRedis(User user) {
         TokenResponse tokens = jwtTokenProvider.createTokens(user.getId(), user.getRole());
 
-        // 6. Redis에 Refresh Token 저장 (동기)
         try {
-            // (RedisConfig에서 설정한 Serializer를 사용하는 동기 메서드 호출)
             redisService.saveRefreshToken(user.getId(), tokens.refreshToken());
-            log.info("Refresh Token 저장 성공 (UserID: {})", user.getId());
-
+            log.info("Refresh Token 저장 성공 - UserID: {}", user.getId());
         } catch (Exception e) {
-            // (만약 RedisConfig 설정이 잘못되었거나 연결 실패 시, 여기에 ERROR가 찍힘)
-            log.error("Refresh Token 저장 실패 (UserID: {})", user.getId(), e);
+            log.error("Refresh Token 저장 실패 - UserID: {}, 로그인은 계속 진행됨", user.getId(), e);
         }
 
-        CookieUtil.addCookie(request, response, "refreshToken", tokens.refreshToken(), 604800, true);
-        CookieUtil.addCookie(request, response, "accessToken", tokens.accessToken(), 86400, false);
-        String targetUrl;
+        return tokens;
+    }
+
+    private void addTokensToCookie(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            TokenResponse tokens
+    ) {
+        CookieUtil.addCookie(
+                request,
+                response,
+                "refreshToken",
+                tokens.refreshToken(),
+                REFRESH_TOKEN_COOKIE_MAX_AGE,
+                true
+        );
+
+        CookieUtil.addCookie(
+                request,
+                response,
+                "accessToken",
+                tokens.accessToken(),
+                ACCESS_TOKEN_COOKIE_MAX_AGE,
+                false
+        );
+    }
+
+    private String determineTargetUrl(User user) {
+        boolean isNewUser = "ROLE_NEW_USER".equals(user.getRole());
+
         if (isNewUser) {
-            targetUrl = UriComponentsBuilder.fromUriString(FRONTEND_ONBOARDING_URL)
+            return UriComponentsBuilder.fromUriString(FRONTEND_ONBOARDING_URL)
                     .queryParam("isNewUser", true)
-                    .build().toUriString();
+                    .build()
+                    .toUriString();
         } else {
-            targetUrl = UriComponentsBuilder.fromUriString(FRONTEND_CALLBACK_URL)
-                    .build().toUriString();
+            return UriComponentsBuilder.fromUriString(FRONTEND_CALLBACK_URL)
+                    .build()
+                    .toUriString();
         }
-
-        getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 }
