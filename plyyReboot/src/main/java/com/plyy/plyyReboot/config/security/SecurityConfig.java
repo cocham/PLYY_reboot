@@ -1,6 +1,5 @@
 package com.plyy.plyyReboot.config.security;
 
-import org.springframework.beans.factory.annotation.Value;
 import com.plyy.plyyReboot.client.oauth.CustomOAuth2UserService;
 import com.plyy.plyyReboot.client.oauth.OAuth2AuthenticationSuccessHandler;
 import com.plyy.plyyReboot.config.security.jwt.JwtAuthenticationFilter;
@@ -18,34 +17,35 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Primary;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.List;
 
 import static com.plyy.plyyReboot.config.security.ApiPaths.API_V1;
 
 @Configuration
 @EnableWebSecurity
+@EnableConfigurationProperties(CorsProperties.class)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final CorsProperties corsProperties;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Value("${app.cors.allowed-origins}")
-    private List<String> allowedOrigins;
     /**
      * 필터 체인 1: API (JWT)
      * /api/** 경로의 모든 요청을 담당
      */
     @Bean
     @Order(1)
-    public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain apiFilterChain(HttpSecurity http, CorsConfigurationSource corsSource) throws Exception {
         http
                 .securityMatcher("/api/**") // (1) /api/로 시작하는 요청만 이 필터가 처리
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsSource))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -86,40 +86,41 @@ public class SecurityConfig {
      */
     @Bean
     @Order(2)
-    public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain webFilterChain(HttpSecurity http, CorsConfigurationSource corsSource) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(AbstractHttpConfigurer::disable)
+            .cors(cors -> cors.configurationSource(corsSource))
+            .csrf(AbstractHttpConfigurer::disable)
 
-                // (1) 웹 경로 권한 설정
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/",
-                                "/static/**",
-                                "/index.html",
-                                "/docs/**",                 // API 문서
-                                "/actuator/**",             // 모니터링
-                                "/login/oauth2/code/**",    // OAuth 리다이렉트
-                                "/oauth2/authorization/**" // OAuth 로그인 시도
-                        ).permitAll()
-                        .anyRequest().authenticated() // (그 외 혹시 모를 웹 경로는 인증 필요)
-                )
+            // (1) 웹 경로 권한 설정
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                        "/",
+                        "/static/**",
+                        "/index.html",
+                        "/docs/**",                 // API 문서
+                        "/actuator/**",             // 모니터링
+                        "/login/oauth2/code/**",    // OAuth 리다이렉트
+                        "/oauth2/authorization/**" // OAuth 로그인 시도
+                ).permitAll()
+                .anyRequest().authenticated() // (그 외 혹시 모를 웹 경로는 인증 필요)
+            )
 
-                // (2) OAuth2 로그인 설정 (웹용 필터체인에만 적용)
-                .oauth2Login(oauth -> oauth
-                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-                        .successHandler(oAuth2AuthenticationSuccessHandler)
-                );
+            // (2) OAuth2 로그인 설정 (웹용 필터체인에만 적용)
+            .oauth2Login(oauth -> oauth
+                .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                .successHandler(oAuth2AuthenticationSuccessHandler)
+            );
 
         return http.build();
     }
 
     // (CORS 설정 Bean - 공통 사용)
     @Bean
+    @Primary
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(allowedOrigins);;
+        config.setAllowedOrigins(corsProperties.getAllowedOrigins());
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setExposedHeaders(Arrays.asList("*"));
@@ -128,4 +129,5 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", config);
         return source;
     }
+
 }
