@@ -1,11 +1,11 @@
 package com.plyy.plyyReboot.client.oauth;
 
 import com.plyy.plyyReboot.client.oauth.util.CookieUtil;
-import com.plyy.plyyReboot.config.security.jwt.JwtTokenProvider;
-import com.plyy.plyyReboot.web.api.dto.TokenResponse;
+import com.plyy.plyyReboot.config.security.jwt.JwtTokenGenerator;
+import com.plyy.plyyReboot.config.security.jwt.JwtProperties;
 import com.plyy.plyyReboot.domain.user.User;
 import com.plyy.plyyReboot.domain.user.UserRepository;
-import com.plyy.plyyReboot.config.security.RedisService;
+import com.plyy.plyyReboot.config.security.redis.RedisService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,15 +25,15 @@ import java.io.IOException;
 @Component
 @RequiredArgsConstructor
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
-    private final JwtTokenProvider jwtTokenProvider;
+
+    private final JwtTokenGenerator jwtTokenGenerator;
     private final UserRepository userRepository;
     private final RedisService redisService;
+    private final JwtProperties jwtProperties;
 
     private static final String FRONTEND_CALLBACK_URL = "http://localhost:3000/auth/callback";
     private static final String FRONTEND_ONBOARDING_URL = "http://localhost:3000/onboarding";
-
-    private static final int REFRESH_TOKEN_COOKIE_MAX_AGE = 604800; // 7일
-    private static final int ACCESS_TOKEN_COOKIE_MAX_AGE = 86400;   // 1일
+    private static final int ACCESS_TOKEN_COOKIE_MAX_AGE = 86400;
 
     @Override
     public void onAuthenticationSuccess(
@@ -41,8 +41,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             HttpServletResponse response,
             Authentication authentication
     ) throws IOException, ServletException {
+
         User user = getUserFromAuthentication(authentication);
-        TokenResponse tokens = issueTokensAndSaveToRedis(user);
+        var tokens = issueTokensAndSaveToRedis(user);
         addTokensToCookie(request, response, tokens);
         String targetUrl = determineTargetUrl(user);
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
@@ -57,8 +58,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 ));
     }
 
-    private TokenResponse issueTokensAndSaveToRedis(User user) {
-        TokenResponse tokens = jwtTokenProvider.createTokens(user.getId(), user.getRole());
+    private JwtTokenGenerator.TokenPair issueTokensAndSaveToRedis(User user) {
+        var tokens = jwtTokenGenerator.generateTokenPair(user.getId(), user.getRole());
 
         try {
             redisService.saveRefreshToken(user.getId(), tokens.refreshToken());
@@ -73,21 +74,14 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private void addTokensToCookie(
             HttpServletRequest request,
             HttpServletResponse response,
-            TokenResponse tokens
+            JwtTokenGenerator.TokenPair tokens
     ) {
-        CookieUtil.addCookie(
-                request,
-                response,
-                "refreshToken",
-                tokens.refreshToken(),
-                REFRESH_TOKEN_COOKIE_MAX_AGE,
-                true
-        );
 
+        // Access Token 쿠키 설정
         CookieUtil.addCookie(
                 request,
                 response,
-                "accessToken",
+                jwtProperties.getCookieName(),
                 tokens.accessToken(),
                 ACCESS_TOKEN_COOKIE_MAX_AGE,
                 false
