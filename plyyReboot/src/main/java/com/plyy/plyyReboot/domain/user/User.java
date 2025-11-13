@@ -1,19 +1,18 @@
 package com.plyy.plyyReboot.domain.user;
 
+import com.plyy.plyyReboot.domain.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Getter
-@NoArgsConstructor // JPA는 기본 생성자가 필수입니다.
+@NoArgsConstructor
 @Entity
-@Table(name = "user") // Flyway의 'user' 테이블과 매핑
-public class User {
+@Table(name = "user")
+public class User extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -74,14 +73,6 @@ public class User {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt; // 마지막 로그인 일시
 
-    @CreationTimestamp // INSERT 시 자동으로 현재 시간 저장
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt; // 가입일
-
-    @UpdateTimestamp // UPDATE 시 자동으로 현재 시간 저장
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt; // 회원정보 수정일
-
     @Column(name = "withdrawn_at")
     private LocalDateTime withdrawnAt; // 회원 탈퇴일 (Soft Delete 용)
 
@@ -99,8 +90,6 @@ public class User {
         this.socialId = socialId;
         this.thumbnailUrl = thumbnailUrl;
         this.lastLoginAt = LocalDateTime.now();
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
     }
 
     public void updateLastLogin() {
