@@ -1,11 +1,14 @@
 package com.plyy.plyyReboot.web.api.onboarding;
 
-import com.plyy.plyyReboot.domain.user.User;
-import com.plyy.plyyReboot.domain.user.UserRepository;
+import com.plyy.plyyReboot.domain.preference.*;
+import com.plyy.plyyReboot.domain.user.*;
 import com.plyy.plyyReboot.web.api.onboarding.dto.OnboardingRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -13,6 +16,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class OnboardingService {
 
     private final UserRepository userRepository;
+
+    private final GenreRepository genreRepository;
+    private final SubGenreRepository subGenreRepository;
+    private final MoodRepository moodRepository;
+    private final UserGenreRepository userGenreRepository;
+    private final UserSubGenreRepository userSubGenreRepository;
+    private final UserMoodRepository userMoodRepository;
 
     /**
      * 닉네임 중복 확인 로직
@@ -28,29 +38,75 @@ public class OnboardingService {
      */
     public User completeOnboarding(Long userId, OnboardingRequestDto requestDto) {
 
-        // 1. 닉네임이 사용 가능한지 다시 한번 확인 (Race Condition 방지)
         if (!isNicknameAvailable(requestDto.getNickname())) {
             throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
         }
 
-        // 2. 유저를 찾아서 닉네임과 Role 업데이트
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
 
-        // 3. GUEST(NEW_USER)인지 확인
         if (!user.getRole().equals("ROLE_NEW_USER")) {
             throw new IllegalStateException("이미 온보딩을 완료한 유저입니다.");
         }
 
-        // 4. 정보 업데이트
         user.onboard(requestDto.getNickname(), "ROLE_USER");
 
-        // 5. 선호 장르/무드 저장 (향후 구현)
-        // saveUserGenres(user, requestDto.getGenreIds());
-        // saveUserMoods(user, requestDto.getMoodIds());
+        saveUserGenres(user, requestDto.getGenreIds());
+        saveUserSubGenres(user, requestDto.getSubGenreIds());
+        saveUserMoods(user, requestDto.getMoodIds());
 
-        // (JPA Dirty Checking으로 user는 자동 save됨)
         return user;
     }
 
+
+    /**
+     * 선호 장르 저장
+     */
+    private void saveUserGenres(User user, List<Long> genreIds) {
+        if (genreIds == null || genreIds.isEmpty()) {
+            return;
+        }
+
+        List<Genre> genres = genreRepository.findAllById(genreIds);
+
+        List<UserGenre> userGenres = genres.stream()
+                .map(genre -> new UserGenre(user, genre))
+                .collect(Collectors.toList());
+
+        userGenreRepository.saveAll(userGenres);
+    }
+
+    /**
+     * 선호 서브 장르 저장
+     */
+    private void saveUserSubGenres(User user, List<Long> subGenreIds) {
+        if (subGenreIds == null || subGenreIds.isEmpty()) {
+            return;
+        }
+
+        List<SubGenre> subGenres = subGenreRepository.findAllById(subGenreIds);
+
+        List<UserSubGenre> userSubGenres = subGenres.stream()
+                .map(subGenre -> new UserSubGenre(user, subGenre))
+                .collect(Collectors.toList());
+
+        userSubGenreRepository.saveAll(userSubGenres);
+    }
+
+    /**
+     * 선호 무드 저장
+     */
+    private void saveUserMoods(User user, List<Long> moodIds) {
+        if (moodIds == null || moodIds.isEmpty()) {
+            return;
+        }
+
+        List<Mood> moods = moodRepository.findAllById(moodIds);
+
+        List<UserMood> userMoods = moods.stream()
+                .map(mood -> new UserMood(user, mood))
+                .collect(Collectors.toList());
+
+        userMoodRepository.saveAll(userMoods);
+    }
 }
