@@ -14,27 +14,23 @@ public final class GoogleAttributes extends OAuth2Attributes {
 
     @Override
     public Email email() {
-        String emailValue = validateRequired(
+        String rawEmail = validateRequired(
                 attributes.get("email"),
                 "email",
-                String.class
-        );
-        return Email.of(emailValue);
+                String.class);
+
+        return createEmail(rawEmail);
     }
 
     @Override
     public ProviderId providerId() {
-        String subValue = validateRequired(
-                attributes.get("sub"),
-                "sub",
-                String.class
-        );
-        return ProviderId.of(subValue);
+        String rawId = validateRequired(attributes.get("sub"), "sub", String.class);
+
+        return createProviderId(rawId);
     }
 
     @Override
     public AuthProvider provider() {
         return AuthProvider.GOOGLE;
     }
-
 }

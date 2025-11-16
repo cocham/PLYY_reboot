@@ -14,18 +14,14 @@ public final class KakaoAttributes extends OAuth2Attributes {
 
     @Override
     public Email email() {
-        String emailValue = getNestedField("kakao_account", "email", String.class);
-        return Email.of(emailValue);
+        String rawEmail = getNestedField("kakao_account", "email", String.class);
+        return createEmail(rawEmail);
     }
 
     @Override
     public ProviderId providerId() {
-        Object idValue = validateRequired(
-                attributes.get("id"),
-                "id",
-                Object.class
-        );
-        return ProviderId.of(idValue.toString());
+        Long rawId = validateRequired(attributes.get("id"), "id", Long.class);
+        return createProviderId(rawId.toString());
     }
 
     @Override

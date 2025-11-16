@@ -15,14 +15,14 @@ public final class NaverAttributes extends OAuth2Attributes {
 
     @Override
     public Email email() {
-        String emailValue = getNestedField("response", "email", String.class);
-        return Email.of(emailValue);
+        String rawEmail = getNestedField("response", "email", String.class);
+        return createEmail(rawEmail);
     }
 
     @Override
     public ProviderId providerId() {
-        String idValue = getNestedField("response", "id", String.class);
-        return ProviderId.of(idValue);
+        String rawId = getNestedField("response", "id", String.class);
+        return createProviderId(rawId);
     }
 
     @Override
