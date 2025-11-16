@@ -1,7 +1,9 @@
 package com.plyy.plyyReboot.client.oauth.exception;
 
 import com.plyy.plyyReboot.client.oauth.common.AuthProvider;
+import lombok.Getter;
 
+@Getter
 public class MissingAttributeException extends BaseAuthException {
 
     private final AuthProvider provider;
