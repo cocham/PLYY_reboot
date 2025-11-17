@@ -1,5 +1,11 @@
 package com.plyy.plyyReboot.config.security.redis;
 
+import com.plyy.plyyReboot.config.security.jwt.exception.RefreshTokenMismatchException;
+import com.plyy.plyyReboot.config.security.jwt.exception.RefreshTokenNotFoundException;
+import com.plyy.plyyReboot.config.security.redis.exception.DenylistAddException;
+import com.plyy.plyyReboot.config.security.redis.exception.RedisDataDeleteException;
+import com.plyy.plyyReboot.config.security.redis.exception.RedisDataRetrievalException;
+import com.plyy.plyyReboot.config.security.redis.exception.RefreshTokenStorageException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -28,6 +34,7 @@ public class RedisService {
      *
      * @param userId 사용자 ID
      * @param refreshToken Refresh Token
+     * @throws RefreshTokenStorageException 저장 실패 시
      */
     public void saveRefreshToken(Long userId, String refreshToken) {
         String key = RedisKeyGenerator.refreshTokenKey(userId);
@@ -37,7 +44,7 @@ public class RedisService {
             log.debug("Refresh Token 저장 성공: userId={}", userId);
         } catch (Exception e) {
             log.error("Refresh Token 저장 실패: userId={}", userId, e);
-            throw new RedisOperationException("Refresh Token 저장에 실패했습니다", e);
+            throw new RefreshTokenStorageException("Refresh Token 저장에 실패했습니다: userId=" + userId, e);
         }
     }
 
@@ -46,6 +53,7 @@ public class RedisService {
      *
      * @param userId 사용자 ID
      * @return Refresh Token (없으면 null)
+     * @throws RedisDataRetrievalException 조회 실패 시 (null 반환 아닌 예외 상황)
      */
     public String getRefreshToken(Long userId) {
         String key = RedisKeyGenerator.refreshTokenKey(userId);
@@ -54,12 +62,44 @@ public class RedisService {
             return redisTemplate.opsForValue().get(key);
         } catch (Exception e) {
             log.error("Refresh Token 조회 실패: userId={}", userId, e);
-            return null;
+            throw new RedisDataRetrievalException("Refresh Token 조회에 실패했습니다: userId=" + userId, e);
         }
     }
 
     /**
+     * Refresh Token 검증
+     * TokenService의 갱신 로직 일부를 옮겨받아,
+     * 토큰 조회, 비교, 불일치 시 삭제(보안 조치)를 한 번에 처리
+     *
+     * @param userId 사용자 ID
+     * @param providedToken 사용자가 제공한 Refresh Token
+     * @throws RefreshTokenNotFoundException Redis에 토큰이 없음 (세션 만료)
+     * @throws RefreshTokenMismatchException 제공된 토큰과 저장된 토큰이 불일치 (탈취 의심)
+     * @throws RedisDataRetrievalException 조회 중 Redis 오류 발생
+     * @throws RedisDataDeleteException 삭제 중 Redis 오류 발생
+     */
+    public void validateRefreshToken(Long userId, String providedToken) {
+        String storedToken = getRefreshToken(userId);
+
+        if (storedToken == null) {
+            log.warn("Refresh Token 검증 실패: 저장된 토큰 없음 (세션 만료), userId={}", userId);
+            throw new RefreshTokenNotFoundException("로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
+        }
+
+        if (!storedToken.equals(providedToken)) {
+            log.warn("Refresh Token 불일치 감지 (보안 조치): userId={}", userId);
+            deleteRefreshToken(userId);
+            throw new RefreshTokenMismatchException("유효하지 않은 토큰입니다. 다시 로그인해주세요.");
+        }
+
+        log.debug("Refresh Token 검증 성공: userId={}", userId);
+    }
+
+    /**
      * Refresh Token 존재 여부 확인
+     *
+     * @param userId 사용자 ID
+     * @return 존재하면 true
      */
     public boolean hasRefreshToken(Long userId) {
         String key = RedisKeyGenerator.refreshTokenKey(userId);
@@ -77,6 +117,7 @@ public class RedisService {
      *
      * @param userId 사용자 ID
      * @return 삭제 성공 여부
+     * @throws RedisDataDeleteException 삭제 실패 시
      */
     public boolean deleteRefreshToken(Long userId) {
         String key = RedisKeyGenerator.refreshTokenKey(userId);
@@ -94,7 +135,7 @@ public class RedisService {
             return result;
         } catch (Exception e) {
             log.error("Refresh Token 삭제 실패: userId={}", userId, e);
-            return false;
+            throw new RedisDataDeleteException("Refresh Token 삭제에 실패했습니다: userId=" + userId, e);
         }
     }
 
@@ -105,6 +146,7 @@ public class RedisService {
      *
      * @param accessToken 거부할 Access Token
      * @param expirationMillis 토큰의 남은 유효 시간 (밀리초)
+     * @throws DenylistAddException Denylist 추가 실패 시
      */
     public void addToDenylist(String accessToken, long expirationMillis) {
         if (expirationMillis <= 0) {
@@ -120,7 +162,7 @@ public class RedisService {
             log.debug("토큰 거부 목록 추가: 만료={}초", duration.toSeconds());
         } catch (Exception e) {
             log.error("토큰 거부 목록 추가 실패", e);
-            throw new RedisOperationException("토큰 거부 목록 추가에 실패했습니다", e);
+            throw new DenylistAddException("토큰 거부 목록 추가에 실패했습니다", e);
         }
     }
 
@@ -138,15 +180,6 @@ public class RedisService {
         } catch (Exception e) {
             log.error("거부 목록 확인 실패", e);
             return true;
-        }
-    }
-
-    /**
-     * Redis 작업 실패 시 발생하는 예외
-     */
-    public static class RedisOperationException extends RuntimeException {
-        public RedisOperationException(String message, Throwable cause) {
-            super(message, cause);
         }
     }
 }
