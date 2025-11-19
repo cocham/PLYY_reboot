@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface SubGenreRepository extends JpaRepository<SubGenre, Long> {
     List<SubGenre> findAllByParentGenreId(Long parentGenreId);
+    boolean existsByNameContaining(String name);
 }

@@ -1,4 +1,4 @@
-package com.plyy.plyyReboot.web.api.playlist.dto.genre.dto;
+package com.plyy.plyyReboot.web.api.playlist.genre.dto;
 
 public record GenreResponse(
         Long id,

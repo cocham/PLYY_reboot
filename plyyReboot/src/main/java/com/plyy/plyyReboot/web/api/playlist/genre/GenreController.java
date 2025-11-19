@@ -1,7 +1,7 @@
-package com.plyy.plyyReboot.web.api.playlist.dto.genre;
+package com.plyy.plyyReboot.web.api.playlist.genre;
 
-import com.plyy.plyyReboot.web.api.playlist.dto.genre.dto.GenreResponse;
-import com.plyy.plyyReboot.web.api.playlist.dto.genre.dto.SubGenreResponse;
+import com.plyy.plyyReboot.web.api.playlist.genre.dto.GenreResponse;
+import com.plyy.plyyReboot.web.api.playlist.genre.dto.SubGenreResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

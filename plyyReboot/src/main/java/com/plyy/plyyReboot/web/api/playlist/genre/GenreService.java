@@ -1,9 +1,9 @@
-package com.plyy.plyyReboot.web.api.playlist.dto.genre;
+package com.plyy.plyyReboot.web.api.playlist.genre;
 
 import com.plyy.plyyReboot.domain.preference.GenreRepository;
 import com.plyy.plyyReboot.domain.preference.SubGenreRepository;
-import com.plyy.plyyReboot.web.api.playlist.dto.genre.dto.GenreResponse;
-import com.plyy.plyyReboot.web.api.playlist.dto.genre.dto.SubGenreResponse;
+import com.plyy.plyyReboot.web.api.playlist.genre.dto.GenreResponse;
+import com.plyy.plyyReboot.web.api.playlist.genre.dto.SubGenreResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
