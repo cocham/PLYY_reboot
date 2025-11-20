@@ -56,6 +56,17 @@ public final class RedisKeyGenerator {
         }
     }
 
+    // 스포티파이 서버 토큰용 키 접두사
+    private static final String SPOTIFY_TOKEN_KEY = "SERVER:SPOTIFY_TOKEN";
+
+    /**
+     * 스포티파이 서버 액세스 토큰 키 생성
+     * 형식: SERVER:SPOTIFY_TOKEN
+     */
+    public static String spotifyTokenKey() {
+        return SPOTIFY_TOKEN_KEY;
+    }
+
     /**
      * 주어진 키가 Refresh Token 키인지 확인
      *

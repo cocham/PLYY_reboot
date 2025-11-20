@@ -12,6 +12,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Redis 기반 토큰 관리 서비스
@@ -136,6 +137,47 @@ public class RedisService {
         } catch (Exception e) {
             log.error("Refresh Token 삭제 실패: userId={}", userId, e);
             throw new RedisDataDeleteException("Refresh Token 삭제에 실패했습니다: userId=" + userId, e);
+        }
+    }
+
+    /**
+     * 스포티파이 액세스 토큰 저장
+     *
+     * @param accessToken 스포티파이에서 받은 토큰
+     * @param ttlSeconds  유효 시간 (초 단위). 3500초 설정
+     */
+    public void saveSpotifyToken(String accessToken, long ttlSeconds) {
+        String key = RedisKeyGenerator.spotifyTokenKey();
+        try {
+            redisTemplate.opsForValue().set(key, accessToken, Duration.ofSeconds(ttlSeconds));
+            log.debug("스포티파이 서버 토큰 저장 완료. TTL: {}초", ttlSeconds);
+        } catch (Exception e) {
+            log.error("스포티파이 토큰 저장 실패 (Redis 오류)", e);
+        }
+    }
+
+    /**
+     * 캐시된 스포티파이 액세스 토큰 조회
+     *
+     * @return 토큰 문자열 (없거나 만료됐으면 null)
+     */
+    public String getSpotifyToken() {
+        String key = RedisKeyGenerator.spotifyTokenKey();
+        try {
+            return redisTemplate.opsForValue().get(key);
+        } catch (Exception e) {
+            log.error("스포티파이 토큰 조회 실패 (Redis 오류)", e);
+            return null;
+        }
+    }
+
+    public Long getSpotifyTokenTTL() {
+        String key = RedisKeyGenerator.spotifyTokenKey();
+        try {
+            return redisTemplate.getExpire(key, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            log.error("스포티파이 토큰 TTL 조회 실패", e);
+            return null;
         }
     }
 

@@ -4,13 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
-public class SpotifyDto { // 껍데기 클래스 (파일명과 일치)
-
-    // --- 이 안에 static record로 정의하면 외부에서 접근 가능합니다 ---
-
+public class SpotifyDto {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record SpotifyTokenResponse(
-            @JsonProperty("access_token") String accessToken
+            @JsonProperty("access_token") String accessToken,
+            @JsonProperty("expires_in") int expiresIn
     ) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
