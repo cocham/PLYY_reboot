@@ -1,5 +1,6 @@
 package com.plyy.plyyReboot.config.security.jwt;
 
+import com.plyy.plyyReboot.config.security.jwt.exception.TokenIssuanceException;
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -64,10 +65,10 @@ public class JwtTokenGenerator {
     public record TokenPair(String accessToken, String refreshToken) {
         public static TokenPair of(String accessToken, String refreshToken) {
             if (accessToken == null || accessToken.isBlank()) {
-                throw new IllegalArgumentException("accessToken은 비어있을 수 없습니다");
+                throw new TokenIssuanceException("accessToken 값이 존재하지 않습니다.");
             }
             if (refreshToken == null || refreshToken.isBlank()) {
-                throw new IllegalArgumentException("refreshToken은 비어있을 수 없습니다");
+                throw new TokenIssuanceException("refreshToken 값이 존재하지 않습니다.");
             }
             return new TokenPair(accessToken, refreshToken);
         }
