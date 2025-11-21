@@ -1,5 +1,7 @@
 package com.plyy.plyyReboot.config.security.jwt;
 
+import com.plyy.plyyReboot.client.oauth.exception.InvalidRoleException;
+import com.plyy.plyyReboot.domain.user.exception.UserNotFoundException;
 import io.jsonwebtoken.Claims;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -22,12 +24,12 @@ public class TokenClaims {
     /**
      * 사용자 ID 추출
      * @return 사용자 ID
-     * @throws IllegalArgumentException userId claim이 없거나 변환 불가능한 경우
+     * @throws UserNotFoundException userId claim이 없거나 변환 불가능한 경우
      */
     public Long getUserId() {
         Number userId = claims.get(USER_ID_CLAIM, Number.class);
         if (userId == null) {
-            throw new IllegalArgumentException("토큰에 userId가 없습니다");
+            throw new UserNotFoundException("해당 유저를 찾을 수 없습니다.");
         }
         return userId.longValue();
     }
@@ -35,12 +37,12 @@ public class TokenClaims {
     /**
      * 사용자 권한(Role) 추출
      * @return 권한 문자열
-     * @throws IllegalArgumentException role claim이 없는 경우
+     * @throws InvalidRoleException role claim이 없는 경우
      */
     public String getRole() {
         String role = claims.get(ROLE_CLAIM, String.class);
         if (role == null || role.isBlank()) {
-            throw new IllegalArgumentException("토큰에 role이 없습니다");
+            throw new InvalidRoleException("Role은 필수 값입니다.");
         }
         return role;
     }

@@ -40,9 +40,10 @@ public class JwtProperties {
     private long refreshTokenExpirationMs = Duration.ofDays(7).toMillis();
 
     /**
-     * 토큰을 전달할 쿠키 이름 (accessToken)
+     * 토큰을 전달할 쿠키 이름 (accessToken, refreshToken)
      */
-    private String cookieName = "accessToken";
+    private String accessTokenCookieName = "accessToken";
+    private String refreshTokenCookieName = "refreshToken";
 
     /**
      * 토큰 발행자 (Issuer)

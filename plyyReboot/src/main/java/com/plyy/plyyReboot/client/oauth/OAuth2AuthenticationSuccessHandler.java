@@ -6,6 +6,7 @@ import com.plyy.plyyReboot.config.security.jwt.JwtProperties;
 import com.plyy.plyyReboot.domain.user.User;
 import com.plyy.plyyReboot.domain.user.UserRepository;
 import com.plyy.plyyReboot.config.security.redis.RedisService;
+import com.plyy.plyyReboot.domain.user.exception.UserNotFoundException;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,7 +34,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private static final String FRONTEND_CALLBACK_URL = "http://localhost:3000/auth/callback";
     private static final String FRONTEND_ONBOARDING_URL = "http://localhost:3000/onboarding";
-    private static final int ACCESS_TOKEN_COOKIE_MAX_AGE = 86400;
 
     @Override
     public void onAuthenticationSuccess(
@@ -44,7 +44,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         User user = getUserFromAuthentication(authentication);
         var tokens = issueTokensAndSaveToRedis(user);
-        addTokensToCookie(request, response, tokens);
+        addRefreshTokenToCookie(request, response, tokens);
         String targetUrl = determineTargetUrl(user);
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
@@ -53,9 +53,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String email = authentication.getName();
 
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "인증 성공했으나 DB에 유저가 없음. Email: " + email
-                ));
+                .orElseThrow(() -> new UserNotFoundException("Email: " + email));
     }
 
     private JwtTokenGenerator.TokenPair issueTokensAndSaveToRedis(User user) {
@@ -71,35 +69,28 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         return tokens;
     }
 
-    private void addTokensToCookie(
+    private void addRefreshTokenToCookie(
             HttpServletRequest request,
             HttpServletResponse response,
             JwtTokenGenerator.TokenPair tokens
     ) {
-
-        // Access Token 쿠키 설정
         CookieUtil.addCookie(
                 request,
                 response,
-                jwtProperties.getCookieName(),
-                tokens.accessToken(),
-                ACCESS_TOKEN_COOKIE_MAX_AGE,
-                false
+                jwtProperties.getRefreshTokenCookieName(),
+                tokens.refreshToken(),
+                jwtProperties.getRefreshTokenExpiration(), // Duration
+                true // HttpOnly
         );
     }
 
     private String determineTargetUrl(User user) {
         boolean isNewUser = "ROLE_NEW_USER".equals(user.getRole());
+        String baseUrl = isNewUser ? FRONTEND_ONBOARDING_URL : FRONTEND_CALLBACK_URL;
 
-        if (isNewUser) {
-            return UriComponentsBuilder.fromUriString(FRONTEND_ONBOARDING_URL)
-                    .queryParam("isNewUser", true)
-                    .build()
-                    .toUriString();
-        } else {
-            return UriComponentsBuilder.fromUriString(FRONTEND_CALLBACK_URL)
-                    .build()
-                    .toUriString();
-        }
+        return UriComponentsBuilder.fromUriString(baseUrl)
+                .queryParam("isNewUser", isNewUser)
+                .build()
+                .toUriString();
     }
 }

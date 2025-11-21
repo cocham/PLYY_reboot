@@ -3,6 +3,7 @@ package com.plyy.plyyReboot.client.oauth.util;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.time.Duration;
 
 public class CookieUtil {
     public static void addCookie(HttpServletRequest request, HttpServletResponse response, String name, String value, int maxAge, boolean httpOnly) {
@@ -16,13 +17,23 @@ public class CookieUtil {
     }
 
     /**
-     * 쿠키를 삭제하는 메서드
-     * maxAge를 0으로 설정하여 즉시 만료시킵니다.
+     * Duration 객체로 만료 시간을 받음
+     * 예: Duration.ofDays(7) -> 알아서 초 단위 int로 변환해줌
+     */
+    public static void addCookie(HttpServletRequest request, HttpServletResponse response, String name, String value, Duration maxAge, boolean httpOnly) {
+        int maxAgeSeconds = (int) maxAge.toSeconds();
+
+        addCookie(request, response, name, value, maxAgeSeconds, httpOnly);
+    }
+
+    /**
+     * 쿠키 삭제 메서드
+     * maxAge를 0으로 설정하여 즉시 만료시킴
      */
     public static void deleteCookie(HttpServletRequest request, HttpServletResponse response, String name) {
         Cookie cookie = new Cookie(name, "");
         cookie.setPath("/");
-        cookie.setMaxAge(0); // 쿠키를 즉시 만료시킴
+        cookie.setMaxAge(0);
         cookie.setSecure(request.isSecure());
         cookie.setHttpOnly(false);
 

@@ -59,6 +59,20 @@ public class TokenExceptionHandler {
                 .body(new ErrorResponse(e.getErrorCode(), "로그아웃 처리 중 오류가 발생했습니다."));
     }
 
+    @ExceptionHandler(MissingAuthorizationHeaderException.class)
+    public ResponseEntity<ErrorResponse> handleMissingAuthorizationHeader(
+            MissingAuthorizationHeaderException e
+    ) {
+        log.debug("Authorization 헤더 없음: {}", e.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse(
+                        e.getErrorCode(),
+                        "인증이 필요합니다. Authorization 헤더를 포함해주세요."
+                ));
+    }
+
     @ExceptionHandler(BaseTokenException.class)
     public ResponseEntity<ErrorResponse> handleBaseToken(BaseTokenException e) {
         log.error("토큰 오류: {}", e.getMessage(), e);

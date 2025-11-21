@@ -12,7 +12,9 @@ public enum TokenErrorCode implements ErrorCodeInterface {
     TOKEN_INVALID("TOKEN_004", "유효하지 않은 토큰입니다."),
     TOKEN_EXPIRED("TOKEN_005", "만료된 토큰입니다."),
     REFRESH_TOKEN_NOT_FOUND("TOKEN_006", "Refresh Token을 찾을 수 없습니다."),
-    REFRESH_TOKEN_MISMATCH("TOKEN_007", "Refresh Token이 일치하지 않습니다.");
+    REFRESH_TOKEN_MISMATCH("TOKEN_007", "Refresh Token이 일치하지 않습니다."),
+    MISSING_AUTHORIZATION_HEADER("TOKEN_008", "Authorization 헤더가 없습니다."),
+    INVALID_AUTHORIZATION_FORMAT("TOKEN_009", "Authorization 헤더 형식이 올바르지 않습니다.");
 
     private final String code;
     private final String message;

@@ -19,7 +19,7 @@ import java.util.Collections;
 
 /**
  * JWT 토큰 기반 인증 필터
- * 요청에서 토큰을 추출하여 검증하고, SecurityContext에 인증 정보 설정
+ * 요청 헤더에서 Access Token을 추출하여 검증하고, SecurityContext에 인증 정보 설정
  */
 @Slf4j
 @Component
@@ -37,26 +37,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // 1. 요청에서 토큰 추출
-        tokenExtractor.extract(request).ifPresent(token -> {
+        tokenExtractor.extractAccessToken(request).ifPresent(token -> {
 
-            // 2. 거부 목록 확인 (로그아웃된 토큰)
             if (redisService.isTokenInDenylist(token)) {
-                log.debug("거부 목록의 토큰 감지: 인증 거부");
+                log.warn("거부 목록(Denylist)의 토큰 감지: 인증 거부");
                 return;
             }
 
-            // 3. 토큰 파싱 및 검증
             tokenParser.parse(token).ifPresent(claims -> {
                 try {
-                    // 4. 인증 객체 생성 및 SecurityContext 설정
                     Authentication authentication = createAuthentication(claims);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
 
                     log.debug("JWT 인증 성공: userId={}", claims.getUserId());
 
                 } catch (Exception e) {
-                    log.warn("인증 객체 생성 실패: {}", e.getMessage());
+                    log.error("인증 객체 생성 실패: {}", e.getMessage());
+                    SecurityContextHolder.clearContext();
                 }
             });
         });
@@ -77,7 +74,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         return new UsernamePasswordAuthenticationToken(
                 userId,      // principal
-                null,        // credentials (JWT에서는 불필요)
+                null,        // credentials
                 authorities  // authorities
         );
     }

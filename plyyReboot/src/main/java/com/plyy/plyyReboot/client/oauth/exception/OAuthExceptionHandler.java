@@ -88,6 +88,23 @@ public class OAuthExceptionHandler {
                 .body(response);
     }
 
+    /**
+     * 역할(Role) 정보 오류 예외 처리
+     */
+    @ExceptionHandler(InvalidRoleException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidRole(InvalidRoleException e) {
+        log.warn("OAuth 역할 정보 오류: {}", e.getMessage(), e);
+
+        ErrorResponse response = new ErrorResponse(
+                e.getErrorCode(),
+                "소셜 로그인 실패: 사용자 권한 정보를 확인할 수 없습니다."
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(response);
+    }
+
     @ExceptionHandler(InvalidProviderException.class)
     public ResponseEntity<ErrorResponse> handleInvalidProvider(InvalidProviderException e) {
         log.error("유효하지 않은 OAuth 제공자: {}", e.getMessage(), e);

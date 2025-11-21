@@ -6,7 +6,7 @@ public final class ApiPaths {
     public static final String API_V1 = "/api/v1";
 
     // Auth
-    public static final String AUTH_REFRESH = API_V1 + "/auth/refresh";
+    public static final String AUTH_REFRESH = API_V1 + "/auth/reissue";
 
     // Users
     public static final String USERS_ONBOARDING_COMPLETE = API_V1 + "/users/onboarding/complete";
