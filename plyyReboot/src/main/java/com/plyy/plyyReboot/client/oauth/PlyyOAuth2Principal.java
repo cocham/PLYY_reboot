@@ -1,5 +1,8 @@
 package com.plyy.plyyReboot.client.oauth;
 
+import com.plyy.plyyReboot.client.oauth.exception.EmailInvalidException;
+import com.plyy.plyyReboot.client.oauth.exception.InvalidRoleException;
+import com.plyy.plyyReboot.client.oauth.exception.MissingAttributeException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -15,18 +18,18 @@ public final class PlyyOAuth2Principal implements OAuth2User {
 
    public PlyyOAuth2Principal(String email, String role, Map<String, Object> attributes) {
         if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("이메일은 null 또는 빈 값일 수 없습니다.");
+            throw new EmailInvalidException("이메일은 필수 값입니다.");
         }
         if (role == null || role.isBlank()) {
-            throw new IllegalArgumentException("역할(Role)은 null 또는 빈 값일 수 없습니다.");
+            throw new InvalidRoleException("Role은 필수 값입니다.");
         }
         if (attributes == null) {
-            throw new IllegalArgumentException("속성(Attributes)은 null일 수 없습니다.");
+            throw new MissingAttributeException("속성(Attributes)은 필수 값입니다.");
         }
 
         this.name = email;
         this.authorities = List.of(new SimpleGrantedAuthority(role));
-        this.attributes = Map.copyOf(attributes); // 방어적 복사
+        this.attributes = Map.copyOf(attributes);
     }
 
     @Override
