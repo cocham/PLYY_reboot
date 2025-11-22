@@ -1,6 +1,6 @@
 package com.plyy.plyyReboot.domain.playlist;
 
-import com.plyy.plyyReboot.domain.preference.Tag;
+import com.plyy.plyyReboot.domain.preference.tag.Tag;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
