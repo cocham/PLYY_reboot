@@ -1,4 +1,4 @@
-package com.plyy.plyyReboot.domain.preference;
+package com.plyy.plyyReboot.domain.preference.tag;
 
 import jakarta.persistence.*;
 import lombok.Getter;

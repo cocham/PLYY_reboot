@@ -1,4 +1,4 @@
-package com.plyy.plyyReboot.domain.preference;
+package com.plyy.plyyReboot.domain.preference.tag;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
