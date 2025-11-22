@@ -1,7 +1,7 @@
 package com.plyy.plyyReboot.web.api.playlist.genre;
 
-import com.plyy.plyyReboot.domain.preference.GenreRepository;
-import com.plyy.plyyReboot.domain.preference.SubGenreRepository;
+import com.plyy.plyyReboot.domain.preference.genre.GenreRepository;
+import com.plyy.plyyReboot.domain.preference.genre.SubGenreRepository;
 import com.plyy.plyyReboot.web.api.playlist.genre.dto.GenreResponse;
 import com.plyy.plyyReboot.web.api.playlist.genre.dto.SubGenreResponse;
 import lombok.RequiredArgsConstructor;
