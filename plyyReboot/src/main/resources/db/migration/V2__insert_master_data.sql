@@ -1,0 +1,67 @@
+-- 1. 상위 장르 (Parent Genres)
+-- (id를 1~21로 명시하여, 아래 하위 장르가 참조할 수 있도록 함)
+INSERT INTO `genre` (`id`, `name`) VALUES
+                                       (1, 'Pop'),
+                                       (2, 'K-Pop'),
+                                       (3, 'J-Pop'),
+                                       (4, 'Rock'),
+                                       (5, 'Electronic'),
+                                       (6, 'Lo-Fi / Chillhop'),
+                                       (7, 'Hip-hop'),
+                                       (8, 'R&B / Soul'),
+                                       (9, 'Indie'),
+                                       (10, 'OST / Soundtrack'),
+                                       (11, 'Jazz / Blues'),
+                                       (12, 'Classical'),
+                                       (13, 'New Age'),
+                                       (14, 'World Music'),
+                                       (15, 'Latin'),
+                                       (16, 'Reggae / Dancehall'),
+                                       (17, 'Afrobeats'),
+                                       (18, 'Funk'),
+                                       (19, 'Country'),
+                                       (20, '국악'),
+                                       (21, 'Compilation');
+
+-- 2. 무드 (Moods)
+INSERT INTO `mood` (`name`, `category`) VALUES
+                                            ('신나는', '에너지'), ('긍정적인', '에너지'), ('설레는', '에너지'),
+                                            ('로파이/휴식', '휴식 및 집중'), ('공부/업무', '휴식 및 집중'), ('수면/명상', '휴식 및 집중'), ('카페/라운지', '휴식 및 집중'),
+                                            ('낭만적인/사랑', '감성'), ('우울한/슬픈', '감성'), ('쓸쓸한/새벽', '감성'), ('비 오는 날', '감성');
+
+-- 3. 하위 장르 (Sub Genres) - (Parent ID는 위 1번 목록을 참조)
+INSERT INTO `sub_genre` (`parent_genre_id`, `name`) VALUES
+                                                        (2, 'Dance (댄스)'),
+                                                        (2, 'Ballad (발라드)'),
+                                                        (2, 'Hip-hop (힙합)'),
+                                                        (2, 'R&B / Soul'),
+                                                        (2, 'Rock / Indie (록/인디)'),
+                                                        (2, 'Trot (트로트)'),
+                                                        (2, 'Folk (포크)'),
+                                                        (3, 'Pop / Dance (팝/댄스)'),
+                                                        (3, 'Rock (록)'),
+                                                        (3, 'Electronic (일렉트로닉)'),
+                                                        (4, 'Alternative / Grunge'),
+                                                        (4, 'Metal / Hardcore (메탈)'),
+                                                        (4, 'Modern / Indie Rock'),
+                                                        (4, 'Hard Rock (하드 록)'),
+                                                        (4, 'Punk (펑크)'),
+                                                        (4, 'Old Rock (올드 록)'),
+                                                        (4, 'Progressive / Psychedelic'),
+                                                        (5, 'EDM'),
+                                                        (5, 'House (하우스)'),
+                                                        (5, 'Ambient (앰비언트)'),
+                                                        (5, 'Techno (테크노)'),
+                                                        (5, 'Trance (트랜스)'),
+                                                        (5, 'Drum & Bass (D&B)'),
+                                                        (5, 'Dubstep (덥스텝)'),
+                                                        (5, 'Downtempo / Chillwave'),
+                                                        (10, 'Movie (영화)'),
+                                                        (10, 'Drama (드라마)'),
+                                                        (10, 'Game (게임)'),
+                                                        (10, 'Animation (애니메이션)'),
+                                                        (11, 'Jazz (재즈)'),
+                                                        (11, 'Blues (블루스)'),
+                                                        (14, 'Asian Pop (아시안 팝)'),
+                                                        (14, 'European (유럽)'),
+                                                        (14, 'Other Regions');
