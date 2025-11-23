@@ -922,7 +922,7 @@ Response 200 OK
 - **Build Tool**: Gradle 8.x
 - **Database**: MySQL 8.0
 - **Cache**: Redis (Jedis Client)
-- **ORM**: Hibernate 6.x, QueryDSL 5.0
+- **ORM**: Hibernate 6.x
 - **Migration**: Flyway
 
 ### Infrastructure
@@ -932,7 +932,6 @@ Response 200 OK
 ### External APIs
 - **Spotify Web API**: Track metadata, audio features (via WebClient)
 - **OAuth2 Providers**: Kakao, Google, Naver
-- **Firebase Cloud Messaging (FCM)**: Push notifications
 
 ### Development Tools
 - **IDE**: IntelliJ IDEA
