@@ -884,6 +884,7 @@ Response 200 OK
 ]
 ```
 </details>
+
 ---
 
 ## 7. 기술 스택 및 개발 환경
@@ -1046,4 +1047,4 @@ docker-compose up -d
 # 애플리케이션 실행
 ./gradlew bootRun
 ```
-</details\>
+</details>
