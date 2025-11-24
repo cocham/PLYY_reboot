@@ -1,4 +1,4 @@
-# PLYY - Human Curation Music Service
+# PLYY 
 
 **"알고리즘이 놓친 숨은 명곡을 찾는 즐거움"**\
 **PLYY**는 큐레이터가 직접 선별한 플레이리스트를 통해, **발견과 탐색부터 감상과 공유까지 편하고 즐거운** 음악 경험을 제공하는 큐레이션\
@@ -13,16 +13,16 @@
 2. [주요 기능](#2-주요-기능)
    - [구현 완료](#21-구현-완료)
    - [개발 예정](#22-개발-예정)
-3. [System Architecture](#3-system-architecture)
+3. [전체 시스템 구조](#3-system-architecture)
    - [전체 시스템 구조](#31-전체-시스템-구조-system-architecture)
-   - [핵심 기술적 의사결정](#32-핵심-기술적-의사결정-technical-decisions)
-   - [디렉토리 구조](#33-디렉토리-구조-directory-structure)
+   - [핵심 기술적 의사결정](#32-핵심-기술적-의사결정)
+   - [패키지 구조](#33-패키지-구조)
 4. [Database Schema (ERD)](#4-database-schema-erd)
    - [설계 철학](#41-설계-철학)
    - [주요 테이블 및 역할](#42-주요-테이블-및-역할)
    - [ERD 다이어그램](#43-erd-다이어그램)
    - [인덱싱 전략](#44-인덱싱-전략)
-5. [Core Process Flows](#5-core-process-flows)
+5. [핵심 프로세스 흐름](#5-core-process-flows)
    - [OAuth2 & JWT Authentication](#51-oauth2--jwt-authentication)
    - [Playlist Registration Flow](#52-playlist-registration-flow-case-study-spotify-integration)
    - [Tag Classification Strategy](#53-tag-classification-strategy)
@@ -36,7 +36,7 @@
 ### 1.1 문제 인식
 
 - **끝없는 스크롤과 의미 없는 추천의 피로감**
-  AI 추천은 때로 사용자의 취향을 온전히 반영하지 못해, 원하는 음악을 찾기 위해 많은 시간을 소비하게 만듭니다.\
+  AI 추천은 때로 사용자의 취향을 온전히 반영하지 못해, 원하는 음악을 찾기 위해 많은 시간을 소비하게 만듭니다.
   또한, 맥락 없이 단순 나열된 곡 리스트는 음악에 대한 흥미를 반감시킵니다.
 
 - **새로운 음악 발견의 어려움**  
@@ -60,7 +60,7 @@
 
 - **장벽 없는 공유와 소통(Community)**\
   누구나 접근 가능한 **YouTube 기반의 재생 환경 제공**을 목표로 하며 플랫폼 구독 여부와 상관없이 음악을 즐길 수 있습니다.
-  더 나아가, 유연한 아키텍처 설계를 바탕으로 추후 **Spotify, Apple Music** 등 다양한 스트리밍 서비스와의 연동을 통해 끊김 없는 감상 경험 제공을 목표로 합니다.
+  더 나아가, 유연한 아키텍처 설계를 바탕으로 추후 **Spotify, Apple Music** 등 다양한 스트리밍 서비스와의 연동을 통해 끊김 없는 감상 경험 제공을 목표로 합니다.\
   이러한 열린 환경 위에서 응원하기, 댓글, 팔로우 기능을 통해 큐레이터와 리스너가 **음악적 공감대**를 형성하는 커뮤니티를 만들어갑니다.
 
 ---
@@ -91,7 +91,7 @@
 | **외부 API 연동** | - 유튜브 및 스포티파이 재생목록 링크 파싱 및 곡 정보 동기화<br>- GetSongBPM API를 활용한 곡 BPM 데이터 확보 및 분석<br>- 곡 상세 화면에서 유튜브 및 스포티파이 바로가기 링크 제공 (**캐싱 적용**) |
  
 ---
-## 3. System Architecture
+## 3. 전체 시스템 구조
 
 **PLYY**는 안정적인 서비스 제공과 유지보수성을 위해 **Hexagonal Architecture**와 **Tiered Caching Strategy**를 채택하여 설계되었습니다.
 
@@ -168,7 +168,7 @@ graph TD
 ```
 
 ---
-### 3.2 핵심 기술적 의사결정 (Technical Decisions)
+### 3.2 핵심 기술적 의사결정
 
 #### 🔹 Hexagonal Architecture (Ports & Adapters)
 
@@ -297,7 +297,7 @@ flowchart TD
 ```
 
 ---
-### 3.3 디렉토리 구조 (Directory Structure)
+### 3.3 패키지 구조
 
 **Hexagonal Architecture**를 기반으로 도메인과 인프라를 분리하고, **전략 패턴**과 **계층형 캐시** 등 핵심 기술적 의사결정을 구조에 반영했습니다.
 
@@ -581,7 +581,7 @@ erDiagram
 
 ---
 
-## 5. Core Process Flows
+## 5. 핵심 프로세스 흐름
 
 #### 5.1 OAuth2 & JWT Authentication
 
@@ -1033,10 +1033,10 @@ Response 200 OK
 <details>
 <summary><b>상세 설정 및 실행 방법 확인하기</b></summary>
 
-### 1. 사전 요구사항 (Prerequisites)
+### 1. 사전 요구사항 
 - **Java 21**, **Docker & Docker Compose**, **MySQL 8.0**
 
-### 2. 환경 설정 파일 구성 (Configuration)
+### 2. 환경 설정 파일 구성
 `src/main/resources` 경로에 아래 4개의 `*.yml`파일을 직접 생성해야 프로젝트가 정상 동작합니다.
 
 ① application.yml
@@ -1147,7 +1147,7 @@ spring:
     issuer: plyy-api
 ```
 
-### 3\. 실행 (Run)
+### 3\. 실행
 
 ```bash
 # 인프라 실행 (MySQL, Redis)
