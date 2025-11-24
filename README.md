@@ -16,6 +16,7 @@
 3. [System Architecture](#3-system-architecture)
    - [전체 시스템 구조](#31-전체-시스템-구조-system-architecture)
    - [핵심 기술적 의사결정](#32-핵심-기술적-의사결정-technical-decisions)
+   - [디렉토리 구조](#33-디렉토리-구조-directory-structure)
 4. [Database Schema (ERD)](#4-database-schema-erd)
    - [설계 철학](#41-설계-철학)
    - [주요 테이블 및 역할](#42-주요-테이블-및-역할)
@@ -296,6 +297,59 @@ flowchart TD
 ```
 
 ---
+### 3.3 디렉토리 구조 (Directory Structure)
+
+**Hexagonal Architecture**를 기반으로 도메인과 인프라를 분리하고, **전략 패턴**과 **계층형 캐시** 등 핵심 기술적 의사결정을 구조에 반영했습니다.
+
+<details>
+<summary><b>패키지 구조 확인하기</b></summary>
+
+```text
+src/main/java/com/plyy/plyyReboot
+├── client/oauth                    # [OAuth2] 소셜 로그인 구현
+│   ├── attributes                  # Google, Kakao, Naver 속성 객체 (OCP)
+│   ├── util/OAuth2AttributesFactory.java  # 공급자별 속성 생성 팩토리
+│   └── CustomOAuth2UserService.java
+│
+├── config
+│   ├── jwt                         # [SRP] JWT 발급/파싱/추출 책임 분리
+│   │   ├── JwtTokenGenerator.java
+│   │   ├── JwtTokenParser.java
+│   │   └── TokenExtractor.java
+│   └── redis                       # [Safety] Redis 운영 안정성 확보
+│       ├── RedisKeyGenerator.java  # 생성자 방어 로직 적용
+│       ├── RefreshTokenManager.java
+│       └── TokenDenylistManager.java
+│
+├── domain                          # [Core] 순수 비즈니스 로직 (외부 의존성 X)
+│   ├── playlist
+│   │   ├── port                    # [Port] 외부 통신 인터페이스 (Inversion of Control)
+│   │   │   └── ExternalPlaylistPort.java
+│   │   ├── PlaylistFactory.java    # 복잡한 생성 로직 캡슐화
+│   │   ├── TrackSynchronizer.java  # 트랙 동기화 도메인 서비스
+│   │   └── PlaylistId.java         # [VO] 타입 안전성 확보
+│   └── preference/tag              # [Strategy] 태그 분류 전략 패턴
+│       ├── TagClassifier.java
+│       ├── GenreTagStrategy.java
+│       └── MoodTagStrategy.java
+│
+├── infrastructure                  # [Adapter] 실제 기술 구현체
+│   ├── cache                       # [Cache] 계층형 토큰 캐시 (L1 Memory + L2 Redis)
+│   │   ├── TieredTokenCache.java
+│   │   ├── InMemoryTokenCache.java
+│   │   └── RedisTokenCache.java
+│   └── external/spotify            # [Adapter] Spotify API 연동
+│       ├── SpotifyPlaylistAdapter.java  # ExternalPlaylistPort 구현체
+│       └── SpotifyTokenManager.java     # 동시성 제어(Atomic) 적용
+│
+└── web/api                         # [Web] 클라이언트 요청 처리
+    ├── auth                        # 인증/인가 (Reissue, Logout)
+    └── playlist                    # 플레이리스트 관리
+```
+</details>
+
+---
+
 ## 4. Database Schema (ERD)
 
 ### 4.1 설계 철학
