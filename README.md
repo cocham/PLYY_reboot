@@ -90,6 +90,7 @@ PLYY는 이러한 가치를 바탕으로 큐레이터와 리스너를 연결하�
 | **외부 API 연동** | - 유튜브 및 스포티파이 재생목록 링크 파싱 및 곡 정보 동기화<br>- GetSongBPM API를 활용한 곡 BPM 데이터 확보 및 분석<br>- 곡 상세 화면에서 유튜브 및 스포티파이 바로가기 링크 제공 (**캐싱 적용**) |
  
 ---
+<div id="3-system-architecture"></div>
 ## 3. 전체 시스템 구조
 
 **PLYY**는 안정적인 서비스 제공과 유지보수성을 위해 **Hexagonal Architecture**와 **Tiered Caching Strategy**를 채택하여 설계되었습니다.
