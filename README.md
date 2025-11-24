@@ -91,6 +91,7 @@ PLYY는 이러한 가치를 바탕으로 큐레이터와 리스너를 연결하�
  
 ---
 <div id="3-system-architecture"></div>
+
 ## 3. 전체 시스템 구조
 
 **PLYY**는 안정적인 서비스 제공과 유지보수성을 위해 **Hexagonal Architecture**와 **Tiered Caching Strategy**를 채택하여 설계되었습니다.
