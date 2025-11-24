@@ -24,6 +24,7 @@
 5. [Core Process Flows](#5-core-process-flows)
    - [OAuth2 & JWT Authentication](#51-oauth2--jwt-authentication)
    - [Playlist Registration Flow](#52-playlist-registration-flow-case-study-spotify-integration)
+   - [Tag Classification Strategy](#53-tag-classification-strategy)
 6. [구현된 API 명세](#6-구현된-api-명세)
 7. [기술 스택 및 개발 환경](#7-기술-스택-및-개발-환경)
 8. [프로젝트 실행 방법](#8-프로젝트-실행-방법)
@@ -698,7 +699,7 @@ sequenceDiagram
 
 #### 구현 상세
 
-**5.1 Track Synchronization (중복 방지 및 동기화)**
+**5.2.1 Track Synchronization (중복 방지 및 동기화)**
 `TrackSynchronizer`는 외부에서 가져온 트랙 리스트를 DB와 대조하여 저장합니다.
 
 ```java
@@ -729,7 +730,7 @@ public List<Track> synchronize(List<ExternalTrackData> externalTracks, PlaylistS
 }
 ```
 
-**5.2  Playlist Factory (도메인 객체 생성 캡슐화)**
+**5.2.2  Playlist Factory (도메인 객체 생성 캡슐화)**
 
 복잡한 연관관계 설정(장르, 무드, 태그, 트랙 순서, 큐레이션 멘트) 책임을 Factory로 위임하여 서비스 계층의 코드를 간소화했습니다.
 
@@ -776,6 +777,38 @@ public PlayList create(PlaylistCreateRequest request, User curator, List<Track> 
 - **Batch Processing**: `trackRepository.saveAll()`을 사용하여 수십 개의 트랙 정보를 한 번의 쿼리(Batch Insert)로 처리함
 - **Bulk Fetching**: 트랙 조회 시 `IN` 절을 활용한 Bulk 조회로 N+1 문제 방지
 - **Non-blocking I/O**: 외부 API 통신에 `WebClient`를 사용하여, 비동기 방식으로 처리
+
+### 5.3 Tag Classification Strategy
+
+**태그 자동 분류 로직**
+
+사용자가 플레이리스트 생성 시 입력한 태그(`tagName`)는 시스템의 기준 데이터(Genre, Mood)와 대조하여 **Type**이 분류됩니다. 이를 통해 단순 텍스트 태그를 넘어, 추후 검색 및 필터링에 최적화된 메타데이터로 활용됩니다.
+
+1. **Genre Priority**: 입력된 태그가 DB의 장르/서브장르 목록에 있다면 `GENRE` 타입으로 우선 분류
+2. **Mood Secondary**: 장르가 아니라면 무드 목록과 대조하여 `MOOD` 타입으로 분류
+3. **Custom Default**: 어디에도 속하지 않는다면 사용자 정의 태그인 `CUSTOM` 타입으로 저장
+
+```mermaid
+flowchart TD
+    %% 스타일 정의
+    classDef start fill:#333,stroke:#333,color:white;
+    classDef decision fill:#fff9c4,stroke:#fbc02d,color:black;
+    classDef result fill:#e1f5fe,stroke:#0277bd,color:black;
+    classDef endNode fill:#333,stroke:#333,color:white;
+
+    %% 노드 정의
+    Start(["태그 입력: tagName"]):::start --> GenreCheck{"장르/서브장르 DB에<br/>포함되는가?"}:::decision
+    
+    GenreCheck -- "Yes" --> TypeGenre(["Type: GENRE"]):::result
+    GenreCheck -- "No" --> MoodCheck{"무드 DB에<br/>포함되는가?"}:::decision
+
+    MoodCheck -- "Yes" --> TypeMood(["Type: MOOD"]):::result
+    MoodCheck -- "No" --> TypeCustom(["Type: CUSTOM<br/>(Default)"]):::result
+
+    TypeGenre --> Create["Tag 엔티티 생성 및 저장"]:::endNode
+    TypeMood --> Create
+    TypeCustom --> Create
+```
 
 ---
 
