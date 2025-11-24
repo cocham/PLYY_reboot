@@ -1,17 +1,42 @@
-# PLYY - Human Curation Music Service
+# PLYY 
 
 **"알고리즘이 놓친 숨은 명곡을 찾는 즐거움"**\
-**PLYY**는 큐레이터가 직접 선별한 플레이리스트를 통해, **발견과 탐색부터 감상과 공유까지 편하고 즐거운** 음악 경험을 제공하는 큐레이션\
-플랫폼입니다. PLYY는 이러한 가치를 바탕으로 큐레이터와 리스너를 연결하고, 청취 경험을 풍부하게 제공하는 것을 목표로 합니다.
+**PLYY**는 큐레이터가 직접 선별한 플레이리스트를 통해, **발견과 탐색부터 감상과 공유까지 편하고 즐거운** 음악 경험을 제공하는 큐레이션 플랫폼입니다.
+PLYY는 이러한 가치를 바탕으로 큐레이터와 리스너를 연결하고, 청취 경험을 풍부하게 제공하는 것을 목표로 합니다.
 
 ---
+## 목차
 
+1. [프로젝트 기획 의도](#1-프로젝트-기획-의도)
+   - [문제 인식](#11-문제-인식)
+   - [해결 방안](#12-해결-방안)
+2. [주요 기능](#2-주요-기능)
+   - [구현 완료](#21-구현-완료)
+   - [개발 예정](#22-개발-예정)
+3. [전체 시스템 구조](#3-system-architecture)
+   - [전체 시스템 구조](#31-전체-시스템-구조-system-architecture)
+   - [핵심 기술적 의사결정](#32-핵심-기술적-의사결정)
+   - [패키지 구조](#33-패키지-구조)
+4. [Database Schema (ERD)](#4-database-schema-erd)
+   - [설계 철학](#41-설계-철학)
+   - [주요 테이블 및 역할](#42-주요-테이블-및-역할)
+   - [ERD 다이어그램](#43-erd-다이어그램)
+   - [인덱싱 전략](#44-인덱싱-전략)
+5. [핵심 프로세스 흐름](#5-core-process-flows)
+   - [OAuth2 & JWT Authentication](#51-oauth2--jwt-authentication)
+   - [Playlist Registration Flow](#52-playlist-registration-flow-case-study-spotify-integration)
+   - [Tag Classification Strategy](#53-tag-classification-strategy)
+6. [구현된 API 명세](#6-구현된-api-명세)
+7. [기술 스택 및 개발 환경](#7-기술-스택-및-개발-환경)
+8. [프로젝트 실행 방법](#8-프로젝트-실행-방법)
+
+---
 ## 1. 프로젝트 기획 의도
 
 ### 1.1 문제 인식
 
 - **끝없는 스크롤과 의미 없는 추천의 피로감**
-  AI 추천은 때로 사용자의 취향을 온전히 반영하지 못해, 원하는 음악을 찾기 위해 많은 시간을 소비하게 만듭니다.\
+  AI 추천은 때로 사용자의 취향을 온전히 반영하지 못해, 원하는 음악을 찾기 위해 많은 시간을 소비하게 만듭니다.
   또한, 맥락 없이 단순 나열된 곡 리스트는 음악에 대한 흥미를 반감시킵니다.
 
 - **새로운 음악 발견의 어려움**  
@@ -34,9 +59,8 @@
   리스너는 이를 통해 음악적 맥락을 이해하고, 자연스럽게 새로운 장르와 아티스트를 발견하고 음악에 더 몰입할 수 있습니다.
 
 - **장벽 없는 공유와 소통(Community)**\
-  누구나 접근 가능한 **YouTube 기반의 재생 환경 제공**을 목표로 하며 플랫폼 구독 여부와 상관없이 음악을 즐길 수 있습니다.
-  더 나아가, 유연한 아키텍처 설계를 바탕으로 추후 **Spotify, Apple Music** 등 다양한 스트리밍 서비스와의 연동을 통해 끊김 없는 감상 경험 제공을 목표로 합니다.
-  이러한 열린 환경 위에서 응원하기, 댓글, 팔로우 기능을 통해 큐레이터와 리스너가 **음악적 공감대**를 형성하는 커뮤니티를 만들어갑니다.
+  누구나 접근 가능한 **YouTube 기반의 재생 환경 제공**을 목표로 하며 플랫폼 구독 여부와 상관없이 음악을 즐길 수 있습니다.\
+  더 나아가, 유연한 아키텍처 설계를 바탕으로 추후 **Spotify, Apple Music** 등 다양한 스트리밍 서비스와의 연동을 통해 끊김 없는 감상 경험 제공을 목표로 합니다. 이러한 열린 환경 위에서 응원하기, 댓글, 팔로우 기능을 통해 큐레이터와 리스너가 **음악적 공감대**를 형성하는 커뮤니티를 만들어갑니다.
 
 ---
 ## 2. 주요 기능
@@ -66,7 +90,9 @@
 | **외부 API 연동** | - 유튜브 및 스포티파이 재생목록 링크 파싱 및 곡 정보 동기화<br>- GetSongBPM API를 활용한 곡 BPM 데이터 확보 및 분석<br>- 곡 상세 화면에서 유튜브 및 스포티파이 바로가기 링크 제공 (**캐싱 적용**) |
  
 ---
-## 3. System Architecture
+<div id="3-system-architecture"></div>
+
+## 3. 전체 시스템 구조
 
 **PLYY**는 안정적인 서비스 제공과 유지보수성을 위해 **Hexagonal Architecture**와 **Tiered Caching Strategy**를 채택하여 설계되었습니다.
 
@@ -143,7 +169,7 @@ graph TD
 ```
 
 ---
-### 3.2 핵심 기술적 의사결정 (Technical Decisions)
+### 3.2 핵심 기술적 의사결정
 
 #### 🔹 Hexagonal Architecture (Ports & Adapters)
 
@@ -272,13 +298,66 @@ flowchart TD
 ```
 
 ---
+### 3.3 패키지 구조
+
+**Hexagonal Architecture**를 기반으로 도메인과 인프라를 분리하고, **전략 패턴**과 **계층형 캐시** 등 핵심 기술적 의사결정을 구조에 반영했습니다.
+
+<details>
+<summary><b>패키지 구조 확인하기</b></summary>
+
+```text
+src/main/java/com/plyy/plyyReboot
+├── client/oauth                    # [OAuth2] 소셜 로그인 구현
+│   ├── attributes                  # Google, Kakao, Naver 속성 객체 (OCP)
+│   ├── util/OAuth2AttributesFactory.java  # 공급자별 속성 생성 팩토리
+│   └── CustomOAuth2UserService.java
+│
+├── config
+│   ├── jwt                         # [SRP] JWT 발급/파싱/추출 책임 분리
+│   │   ├── JwtTokenGenerator.java
+│   │   ├── JwtTokenParser.java
+│   │   └── TokenExtractor.java
+│   └── redis                       # [Safety] Redis 운영 안정성 확보
+│       ├── RedisKeyGenerator.java  # 생성자 방어 로직 적용
+│       ├── RefreshTokenManager.java
+│       └── TokenDenylistManager.java
+│
+├── domain                          # [Core] 순수 비즈니스 로직 (외부 의존성 X)
+│   ├── playlist
+│   │   ├── port                    # [Port] 외부 통신 인터페이스 (Inversion of Control)
+│   │   │   └── ExternalPlaylistPort.java
+│   │   ├── PlaylistFactory.java    # 복잡한 생성 로직 캡슐화
+│   │   ├── TrackSynchronizer.java  # 트랙 동기화 도메인 서비스
+│   │   └── PlaylistId.java         # [VO] 타입 안전성 확보
+│   └── preference/tag              # [Strategy] 태그 분류 전략 패턴
+│       ├── TagClassifier.java
+│       ├── GenreTagStrategy.java
+│       └── MoodTagStrategy.java
+│
+├── infrastructure                  # [Adapter] 실제 기술 구현체
+│   ├── cache                       # [Cache] 계층형 토큰 캐시 (L1 Memory + L2 Redis)
+│   │   ├── TieredTokenCache.java
+│   │   ├── InMemoryTokenCache.java
+│   │   └── RedisTokenCache.java
+│   └── external/spotify            # [Adapter] Spotify API 연동
+│       ├── SpotifyPlaylistAdapter.java  # ExternalPlaylistPort 구현체
+│       └── SpotifyTokenManager.java     # 동시성 제어(Atomic) 적용
+│
+└── web/api                         # [Web] 클라이언트 요청 처리
+    ├── auth                        # 인증/인가 (Reissue, Logout)
+    └── playlist                    # 플레이리스트 관리
+```
+</details>
+
+---
+
 ## 4. Database Schema (ERD)
 
 ### 4.1 설계 철학
 
 PLYY의 데이터베이스는 데이터 무결성과 조회 성능의 균형을 맞추기 위해 다음 원칙을 따랐습니다.
 
-1.  **정규화와 반정규화의 균형**: 기본적으로 3NF를 준수하여 데이터 중복을 제거하되, 빈번한 조회가 발생하는 통계 정보(`total_track_count`, `avg_bpm`, `playlist_count` 등)는 **반정규화(Denormalization)**하여 조인 연산을 줄이고 조회 성능 최적화
+1.  **정규화와 반정규화의 균형**: 기본적으로 3NF를 준수하여 데이터 중복을 제거하되, 빈번한 조회가 발생하는 통계 정보(`total_track_count`, `avg_bpm`, `playlist_count` 등)는 반정규화하여 조인 연산 감소 및 조회 성능 최적화
 2.  **데이터 무결성 및 생명주기 관리**: 모든 관계 테이블(`_like`, `_tag` 등)에 `ON DELETE CASCADE` 제약조건을 설정하여 참조 무결성 유지
 3.  **확장 가능한 메타데이터 구조**: 장르, 무드, 태그 등 확장 가능성이 높은 데이터는 별도 엔티티로 분리
 
@@ -503,7 +582,7 @@ erDiagram
 
 ---
 
-## 5. Core Process Flows
+## 5. 핵심 프로세스 흐름
 
 #### 5.1 OAuth2 & JWT Authentication
 
@@ -675,7 +754,7 @@ sequenceDiagram
 
 #### 구현 상세
 
-**5.1 Track Synchronization (중복 방지 및 동기화)**
+**5.2.1 Track Synchronization (중복 방지 및 동기화)**
 `TrackSynchronizer`는 외부에서 가져온 트랙 리스트를 DB와 대조하여 저장합니다.
 
 ```java
@@ -706,7 +785,7 @@ public List<Track> synchronize(List<ExternalTrackData> externalTracks, PlaylistS
 }
 ```
 
-**5.2  Playlist Factory (도메인 객체 생성 캡슐화)**
+**5.2.2  Playlist Factory (도메인 객체 생성 캡슐화)**
 
 복잡한 연관관계 설정(장르, 무드, 태그, 트랙 순서, 큐레이션 멘트) 책임을 Factory로 위임하여 서비스 계층의 코드를 간소화했습니다.
 
@@ -753,6 +832,38 @@ public PlayList create(PlaylistCreateRequest request, User curator, List<Track> 
 - **Batch Processing**: `trackRepository.saveAll()`을 사용하여 수십 개의 트랙 정보를 한 번의 쿼리(Batch Insert)로 처리함
 - **Bulk Fetching**: 트랙 조회 시 `IN` 절을 활용한 Bulk 조회로 N+1 문제 방지
 - **Non-blocking I/O**: 외부 API 통신에 `WebClient`를 사용하여, 비동기 방식으로 처리
+
+### 5.3 Tag Classification Strategy
+
+**태그 자동 분류 로직**
+
+사용자가 플레이리스트 생성 시 입력한 태그(`tagName`)는 시스템의 기준 데이터(Genre, Mood)와 대조하여 **Type**이 분류됩니다. 이를 통해 단순 텍스트 태그를 넘어, 추후 검색 및 필터링에 최적화된 메타데이터로 활용됩니다.
+
+1. **Genre Priority**: 입력된 태그가 DB의 장르/서브장르 목록에 있다면 `GENRE` 타입으로 우선 분류
+2. **Mood Secondary**: 장르가 아니라면 무드 목록과 대조하여 `MOOD` 타입으로 분류
+3. **Custom Default**: 어디에도 속하지 않는다면 사용자 정의 태그인 `CUSTOM` 타입으로 저장
+
+```mermaid
+flowchart TD
+    %% 스타일 정의
+    classDef start fill:#333,stroke:#333,color:white;
+    classDef decision fill:#fff9c4,stroke:#fbc02d,color:black;
+    classDef result fill:#e1f5fe,stroke:#0277bd,color:black;
+    classDef endNode fill:#333,stroke:#333,color:white;
+
+    %% 노드 정의
+    Start(["태그 입력: tagName"]):::start --> GenreCheck{"장르/서브장르 DB에<br/>포함되는가?"}:::decision
+    
+    GenreCheck -- "Yes" --> TypeGenre(["Type: GENRE"]):::result
+    GenreCheck -- "No" --> MoodCheck{"무드 DB에<br/>포함되는가?"}:::decision
+
+    MoodCheck -- "Yes" --> TypeMood(["Type: MOOD"]):::result
+    MoodCheck -- "No" --> TypeCustom(["Type: CUSTOM<br/>(Default)"]):::result
+
+    TypeGenre --> Create["Tag 엔티티 생성 및 저장"]:::endNode
+    TypeMood --> Create
+    TypeCustom --> Create
+```
 
 ---
 
@@ -899,7 +1010,7 @@ Response 200 OK
 - **Build Tool**: Gradle 8.x
 - **Database**: MySQL 8.0
 - **Cache**: Redis (Jedis Client)
-- **ORM**: Hibernate 6.x, QueryDSL 5.0
+- **ORM**: Hibernate 6.x
 - **Migration**: Flyway
 
 ### Infrastructure
@@ -909,7 +1020,6 @@ Response 200 OK
 ### External APIs
 - **Spotify Web API**: Track metadata, audio features (via WebClient)
 - **OAuth2 Providers**: Kakao, Google, Naver
-- **Firebase Cloud Messaging (FCM)**: Push notifications
 
 ### Development Tools
 - **IDE**: IntelliJ IDEA
@@ -924,10 +1034,10 @@ Response 200 OK
 <details>
 <summary><b>상세 설정 및 실행 방법 확인하기</b></summary>
 
-### 1. 사전 요구사항 (Prerequisites)
+### 1. 사전 요구사항 
 - **Java 21**, **Docker & Docker Compose**, **MySQL 8.0**
 
-### 2. 환경 설정 파일 구성 (Configuration)
+### 2. 환경 설정 파일 구성
 `src/main/resources` 경로에 아래 4개의 `*.yml`파일을 직접 생성해야 프로젝트가 정상 동작합니다.
 
 ① application.yml
@@ -1038,7 +1148,7 @@ spring:
     issuer: plyy-api
 ```
 
-### 3\. 실행 (Run)
+### 3\. 실행
 
 ```bash
 # 인프라 실행 (MySQL, Redis)
